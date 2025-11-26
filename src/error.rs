@@ -3,14 +3,17 @@
 //! [CanError] models failure codes only whereas [CanOkError] also models the possibility of
 //! success stated by the [Ok](CanOkError::Ok) variant.
 
-use core::fmt;
 use std::error::Error;
+use std::fmt;
+use std::sync::Arc;
 
 use crate::peak_can;
 
 ///
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum CanError {
+    ///
+    Libloading(Arc<libloading::Error>),
     ///
     XmtFull,
     ///
@@ -65,8 +68,8 @@ pub enum CanError {
     IllOperation,
 }
 
-/// Type modeling all possible states of an operation as exposed by [PEAK_basic_sys].
-#[derive(Debug, PartialEq)]
+/// Type modeling all possible states of an operation as exposed by [PCAN_basic_sys].
+#[derive(Debug)]
 pub enum CanOkError {
     /// Models the success of an operation.
     Ok,
@@ -77,39 +80,40 @@ pub enum CanOkError {
 impl From<CanError> for u32 {
     fn from(value: CanError) -> u32 {
         match value {
-            CanError::XmtFull => peak_can::PEAK_ERROR_XMTFULL,
-            CanError::Overrun => peak_can::PEAK_ERROR_OVERRUN,
-            CanError::BusLight => peak_can::PEAK_ERROR_BUSLIGHT,
-            CanError::BusHeavy => peak_can::PEAK_ERROR_BUSHEAVY,
-            CanError::BusPassive => peak_can::PEAK_ERROR_BUSPASSIVE,
-            CanError::BusOff => peak_can::PEAK_ERROR_BUSOFF,
+            CanError::Libloading(_) => peak_can::PCAN_ERROR_UNKNOWN,
+            CanError::XmtFull => peak_can::PCAN_ERROR_XMTFULL,
+            CanError::Overrun => peak_can::PCAN_ERROR_OVERRUN,
+            CanError::BusLight => peak_can::PCAN_ERROR_BUSLIGHT,
+            CanError::BusHeavy => peak_can::PCAN_ERROR_BUSHEAVY,
+            CanError::BusPassive => peak_can::PCAN_ERROR_BUSPASSIVE,
+            CanError::BusOff => peak_can::PCAN_ERROR_BUSOFF,
             CanError::AnyBusErr => {
-                let mut value = peak_can::PEAK_ERROR_BUSWARNING;
-                value |= peak_can::PEAK_ERROR_BUSLIGHT;
-                value |= peak_can::PEAK_ERROR_BUSHEAVY;
-                value |= peak_can::PEAK_ERROR_BUSOFF;
-                value |= peak_can::PEAK_ERROR_BUSPASSIVE;
+                let mut value = peak_can::PCAN_ERROR_BUSWARNING;
+                value |= peak_can::PCAN_ERROR_BUSLIGHT;
+                value |= peak_can::PCAN_ERROR_BUSHEAVY;
+                value |= peak_can::PCAN_ERROR_BUSOFF;
+                value |= peak_can::PCAN_ERROR_BUSPASSIVE;
                 value
             }
-            CanError::QrcvEmpty => peak_can::PEAK_ERROR_QRCVEMPTY,
-            CanError::QOverrun => peak_can::PEAK_ERROR_QOVERRUN,
-            CanError::QxmtFull => peak_can::PEAK_ERROR_QXMTFULL,
-            CanError::RegTest => peak_can::PEAK_ERROR_REGTEST,
-            CanError::NoDriver => peak_can::PEAK_ERROR_NODRIVER,
-            CanError::HwInUse => peak_can::PEAK_ERROR_HWINUSE,
-            CanError::NetInUse => peak_can::PEAK_ERROR_NETINUSE,
-            CanError::IllHw => peak_can::PEAK_ERROR_ILLHW,
-            CanError::IllNet => peak_can::PEAK_ERROR_ILLNET,
-            CanError::IllClient => peak_can::PEAK_ERROR_ILLCLIENT,
-            CanError::Resource => peak_can::PEAK_ERROR_RESOURCE,
-            CanError::IllParamType => peak_can::PEAK_ERROR_ILLPARAMTYPE,
-            CanError::IllParamVal => peak_can::PEAK_ERROR_ILLPARAMVAL,
-            CanError::Unknown => peak_can::PEAK_ERROR_UNKNOWN,
-            CanError::IllData => peak_can::PEAK_ERROR_ILLDATA,
-            CanError::IllMode => peak_can::PEAK_ERROR_ILLMODE,
-            CanError::Caution => peak_can::PEAK_ERROR_CAUTION,
-            CanError::Initialize => peak_can::PEAK_ERROR_INITIALIZE,
-            CanError::IllOperation => peak_can::PEAK_ERROR_ILLOPERATION,
+            CanError::QrcvEmpty => peak_can::PCAN_ERROR_QRCVEMPTY,
+            CanError::QOverrun => peak_can::PCAN_ERROR_QOVERRUN,
+            CanError::QxmtFull => peak_can::PCAN_ERROR_QXMTFULL,
+            CanError::RegTest => peak_can::PCAN_ERROR_REGTEST,
+            CanError::NoDriver => peak_can::PCAN_ERROR_NODRIVER,
+            CanError::HwInUse => peak_can::PCAN_ERROR_HWINUSE,
+            CanError::NetInUse => peak_can::PCAN_ERROR_NETINUSE,
+            CanError::IllHw => peak_can::PCAN_ERROR_ILLHW,
+            CanError::IllNet => peak_can::PCAN_ERROR_ILLNET,
+            CanError::IllClient => peak_can::PCAN_ERROR_ILLCLIENT,
+            CanError::Resource => peak_can::PCAN_ERROR_RESOURCE,
+            CanError::IllParamType => peak_can::PCAN_ERROR_ILLPARAMTYPE,
+            CanError::IllParamVal => peak_can::PCAN_ERROR_ILLPARAMVAL,
+            CanError::Unknown => peak_can::PCAN_ERROR_UNKNOWN,
+            CanError::IllData => peak_can::PCAN_ERROR_ILLDATA,
+            CanError::IllMode => peak_can::PCAN_ERROR_ILLMODE,
+            CanError::Caution => peak_can::PCAN_ERROR_CAUTION,
+            CanError::Initialize => peak_can::PCAN_ERROR_INITIALIZE,
+            CanError::IllOperation => peak_can::PCAN_ERROR_ILLOPERATION,
         }
     }
 }
@@ -117,7 +121,7 @@ impl From<CanError> for u32 {
 impl From<CanOkError> for u32 {
     fn from(value: CanOkError) -> u32 {
         match value {
-            CanOkError::Ok => peak_can::PEAK_ERROR_OK,
+            CanOkError::Ok => peak_can::PCAN_ERROR_OK,
             CanOkError::Err(error) => u32::from(error),
         }
     }
@@ -128,32 +132,32 @@ impl TryFrom<u32> for CanError {
 
     fn try_from(value: u32) -> Result<Self, Self::Error> {
         match value {
-            peak_can::PEAK_ERROR_XMTFULL => Ok(CanError::XmtFull),
-            peak_can::PEAK_ERROR_OVERRUN => Ok(CanError::Overrun),
-            peak_can::PEAK_ERROR_BUSLIGHT => Ok(CanError::BusLight),
-            peak_can::PEAK_ERROR_BUSHEAVY => Ok(CanError::BusHeavy),
-            peak_can::PEAK_ERROR_BUSPASSIVE => Ok(CanError::BusPassive),
-            peak_can::PEAK_ERROR_BUSOFF => Ok(CanError::BusOff),
-            peak_can::PEAK_ERROR_ANYBUSERR => Ok(CanError::AnyBusErr),
-            peak_can::PEAK_ERROR_QRCVEMPTY => Ok(CanError::QrcvEmpty),
-            peak_can::PEAK_ERROR_QOVERRUN => Ok(CanError::QOverrun),
-            peak_can::PEAK_ERROR_QXMTFULL => Ok(CanError::QxmtFull),
-            peak_can::PEAK_ERROR_REGTEST => Ok(CanError::RegTest),
-            peak_can::PEAK_ERROR_NODRIVER => Ok(CanError::NoDriver),
-            peak_can::PEAK_ERROR_HWINUSE => Ok(CanError::HwInUse),
-            peak_can::PEAK_ERROR_NETINUSE => Ok(CanError::NetInUse),
-            peak_can::PEAK_ERROR_ILLHW => Ok(CanError::IllHw),
-            peak_can::PEAK_ERROR_ILLNET => Ok(CanError::IllNet),
-            peak_can::PEAK_ERROR_ILLCLIENT => Ok(CanError::IllClient),
-            peak_can::PEAK_ERROR_RESOURCE => Ok(CanError::Resource),
-            peak_can::PEAK_ERROR_ILLPARAMTYPE => Ok(CanError::IllParamType),
-            peak_can::PEAK_ERROR_ILLPARAMVAL => Ok(CanError::IllParamVal),
-            peak_can::PEAK_ERROR_UNKNOWN => Ok(CanError::Unknown),
-            peak_can::PEAK_ERROR_ILLDATA => Ok(CanError::IllData),
-            peak_can::PEAK_ERROR_ILLMODE => Ok(CanError::IllMode),
-            peak_can::PEAK_ERROR_CAUTION => Ok(CanError::Caution),
-            peak_can::PEAK_ERROR_INITIALIZE => Ok(CanError::Initialize),
-            peak_can::PEAK_ERROR_ILLOPERATION => Ok(CanError::IllOperation),
+            peak_can::PCAN_ERROR_XMTFULL => Ok(CanError::XmtFull),
+            peak_can::PCAN_ERROR_OVERRUN => Ok(CanError::Overrun),
+            peak_can::PCAN_ERROR_BUSLIGHT => Ok(CanError::BusLight),
+            peak_can::PCAN_ERROR_BUSHEAVY => Ok(CanError::BusHeavy),
+            peak_can::PCAN_ERROR_BUSPASSIVE => Ok(CanError::BusPassive),
+            peak_can::PCAN_ERROR_BUSOFF => Ok(CanError::BusOff),
+            peak_can::PCAN_ERROR_ANYBUSERR => Ok(CanError::AnyBusErr),
+            peak_can::PCAN_ERROR_QRCVEMPTY => Ok(CanError::QrcvEmpty),
+            peak_can::PCAN_ERROR_QOVERRUN => Ok(CanError::QOverrun),
+            peak_can::PCAN_ERROR_QXMTFULL => Ok(CanError::QxmtFull),
+            peak_can::PCAN_ERROR_REGTEST => Ok(CanError::RegTest),
+            peak_can::PCAN_ERROR_NODRIVER => Ok(CanError::NoDriver),
+            peak_can::PCAN_ERROR_HWINUSE => Ok(CanError::HwInUse),
+            peak_can::PCAN_ERROR_NETINUSE => Ok(CanError::NetInUse),
+            peak_can::PCAN_ERROR_ILLHW => Ok(CanError::IllHw),
+            peak_can::PCAN_ERROR_ILLNET => Ok(CanError::IllNet),
+            peak_can::PCAN_ERROR_ILLCLIENT => Ok(CanError::IllClient),
+            peak_can::PCAN_ERROR_RESOURCE => Ok(CanError::Resource),
+            peak_can::PCAN_ERROR_ILLPARAMTYPE => Ok(CanError::IllParamType),
+            peak_can::PCAN_ERROR_ILLPARAMVAL => Ok(CanError::IllParamVal),
+            peak_can::PCAN_ERROR_UNKNOWN => Ok(CanError::Unknown),
+            peak_can::PCAN_ERROR_ILLDATA => Ok(CanError::IllData),
+            peak_can::PCAN_ERROR_ILLMODE => Ok(CanError::IllMode),
+            peak_can::PCAN_ERROR_CAUTION => Ok(CanError::Caution),
+            peak_can::PCAN_ERROR_INITIALIZE => Ok(CanError::Initialize),
+            peak_can::PCAN_ERROR_ILLOPERATION => Ok(CanError::IllOperation),
             _ => Err(()),
         }
     }
@@ -164,7 +168,7 @@ impl TryFrom<u32> for CanOkError {
 
     fn try_from(value: u32) -> Result<Self, Self::Error> {
         match value {
-            peak_can::PEAK_ERROR_OK => Ok(CanOkError::Ok),
+            peak_can::PCAN_ERROR_OK => Ok(CanOkError::Ok),
             _ => {
                 let err = CanError::try_from(value)?;
                 Ok(CanOkError::Err(err))
@@ -173,40 +177,43 @@ impl TryFrom<u32> for CanOkError {
     }
 }
 
+impl From<libloading::Error> for CanError {
+    fn from(value: libloading::Error) -> Self {
+        Self::Libloading(Arc::new(value))
+    }
+}
+
 impl fmt::Display for CanError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                CanError::XmtFull => "xmt full",
-                CanError::Overrun => "overrun",
-                CanError::BusLight => "bus light",
-                CanError::BusHeavy => "bus heavy",
-                CanError::BusPassive => "bus passive",
-                CanError::BusOff => "bus off",
-                CanError::AnyBusErr => "any bus error",
-                CanError::QrcvEmpty => "qrcv empty",
-                CanError::QOverrun => "q overrun",
-                CanError::QxmtFull => "qxmt full",
-                CanError::RegTest => "reg test",
-                CanError::NoDriver => "no driver",
-                CanError::HwInUse => "hardware in use",
-                CanError::NetInUse => "network in use",
-                CanError::IllHw => "illegal hardware",
-                CanError::IllNet => "illegal network",
-                CanError::IllClient => "illegal client",
-                CanError::Resource => "resource",
-                CanError::IllParamType => "illegal parameter type",
-                CanError::IllParamVal => "illegal parameter value",
-                CanError::Unknown => "unknown",
-                CanError::IllData => "illegal data",
-                CanError::IllMode => "illegal mode",
-                CanError::Caution => "caution",
-                CanError::Initialize => "initialize",
-                CanError::IllOperation => "illegal operation",
-            }
-        )
+        match self {
+            CanError::Libloading(e) => write!(f, "{e}"),
+            CanError::XmtFull => write!(f, "xmt full"),
+            CanError::Overrun => write!(f, "overrun"),
+            CanError::BusLight => write!(f, "bus light"),
+            CanError::BusHeavy => write!(f, "bus heavy"),
+            CanError::BusPassive => write!(f, "bus passive"),
+            CanError::BusOff => write!(f, "bus off"),
+            CanError::AnyBusErr => write!(f, "any bus error"),
+            CanError::QrcvEmpty => write!(f, "qrcv empty"),
+            CanError::QOverrun => write!(f, "q overrun"),
+            CanError::QxmtFull => write!(f, "qxmt full"),
+            CanError::RegTest => write!(f, "reg test"),
+            CanError::NoDriver => write!(f, "no driver"),
+            CanError::HwInUse => write!(f, "hardware in use"),
+            CanError::NetInUse => write!(f, "network in use"),
+            CanError::IllHw => write!(f, "illegal hardware"),
+            CanError::IllNet => write!(f, "illegal network"),
+            CanError::IllClient => write!(f, "illegal client"),
+            CanError::Resource => write!(f, "resource"),
+            CanError::IllParamType => write!(f, "illegal parameter type"),
+            CanError::IllParamVal => write!(f, "illegal parameter value"),
+            CanError::Unknown => write!(f, "unknown"),
+            CanError::IllData => write!(f, "illegal data"),
+            CanError::IllMode => write!(f, "illegal mode"),
+            CanError::Caution => write!(f, "caution"),
+            CanError::Initialize => write!(f, "initialize"),
+            CanError::IllOperation => write!(f, "illegal operation"),
+        }
     }
 }
 

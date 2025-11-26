@@ -18,8 +18,8 @@ pub enum PccBus {
 impl From<PccBus> for u16 {
     fn from(value: PccBus) -> Self {
         let ret = match value {
-            PccBus::PCC1 => peak_can::PEAK_PCCBUS1,
-            PccBus::PCC2 => peak_can::PEAK_PCCBUS2,
+            PccBus::PCC1 => peak_can::PCAN_PCCBUS1,
+            PccBus::PCC2 => peak_can::PCAN_PCCBUS2,
         } as u16;
         ret
     }
@@ -30,8 +30,8 @@ impl TryFrom<u16> for PccBus {
 
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value as u32 {
-            peak_can::PEAK_PCCBUS1 => Ok(PccBus::PCC1),
-            peak_can::PEAK_PCCBUS2 => Ok(PccBus::PCC2),
+            peak_can::PCAN_PCCBUS1 => Ok(PccBus::PCC1),
+            peak_can::PCAN_PCCBUS2 => Ok(PccBus::PCC2),
             _ => Err(()),
         }
     }

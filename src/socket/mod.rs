@@ -11,6 +11,7 @@ pub mod usb;
 
 use crate::bus::Bus;
 use crate::error::{CanError, CanOkError};
+use crate::pcan_basic;
 use crate::peak_can;
 
 use std::ops::Deref;
@@ -32,7 +33,7 @@ pub enum FrameConstructionError {
 
 #[derive(Debug, Copy, Clone)]
 pub struct CanFrame {
-    frame: peak_can::CANTPMsg,
+    frame: peak_can::TPCANMsg,
 }
 
 impl CanFrame {
@@ -53,17 +54,17 @@ impl CanFrame {
 
             match msg_type {
                 MessageType::Standard => Ok(CanFrame {
-                    frame: peak_can::CANTPMsg {
+                    frame: peak_can::TPCANMsg {
                         ID: can_id & STANDARD_MASK,
-                        MSGTYPE: peak_can::PEAK_MESSAGE_STANDARD as u8,
+                        MSGTYPE: peak_can::PCAN_MESSAGE_STANDARD as u8,
                         LEN: data.len() as u8,
                         DATA: frame_data,
                     },
                 }),
                 MessageType::Extended => Ok(CanFrame {
-                    frame: peak_can::CANTPMsg {
+                    frame: peak_can::TPCANMsg {
                         ID: can_id & EXTENDED_MASK,
-                        MSGTYPE: peak_can::PEAK_MESSAGE_EXTENDED as u8,
+                        MSGTYPE: peak_can::PCAN_MESSAGE_EXTENDED as u8,
                         LEN: data.len() as u8,
                         DATA: frame_data,
                     },
@@ -73,12 +74,12 @@ impl CanFrame {
     }
 
     pub fn is_standard_frame(&self) -> bool {
-        // PEAK_MESSAGE_STANDARD flag is denoted as 0, so check for extended frame flag instead
+        // PCAN_MESSAGE_STANDARD flag is denoted as 0, so check for extended frame flag instead
         !self.is_extended_frame()
     }
 
     pub fn is_extended_frame(&self) -> bool {
-        self.frame.MSGTYPE & peak_can::PEAK_MESSAGE_EXTENDED as u8 != 0
+        self.frame.MSGTYPE & peak_can::PCAN_MESSAGE_EXTENDED as u8 != 0
     }
 
     pub fn can_id(&self) -> u32 {
@@ -133,7 +134,7 @@ impl PartialEq for CanFrame {
 
 #[derive(Debug, Copy, Clone)]
 pub struct CanFdFrame {
-    frame: peak_can::CANTPMsgFD,
+    frame: peak_can::TPCANMsgFD,
 }
 
 impl CanFdFrame {
@@ -154,17 +155,17 @@ impl CanFdFrame {
 
             match msg_type {
                 MessageType::Standard => Ok(CanFdFrame {
-                    frame: peak_can::CANTPMsgFD {
+                    frame: peak_can::TPCANMsgFD {
                         ID: can_id & STANDARD_MASK,
-                        MSGTYPE: peak_can::PEAK_MESSAGE_STANDARD as u8,
+                        MSGTYPE: peak_can::PCAN_MESSAGE_STANDARD as u8,
                         DLC: data.len() as u8,
                         DATA: frame_data,
                     },
                 }),
                 MessageType::Extended => Ok(CanFdFrame {
-                    frame: peak_can::CANTPMsgFD {
+                    frame: peak_can::TPCANMsgFD {
                         ID: can_id & EXTENDED_MASK,
-                        MSGTYPE: peak_can::PEAK_MESSAGE_EXTENDED as u8,
+                        MSGTYPE: peak_can::PCAN_MESSAGE_EXTENDED as u8,
                         DLC: data.len() as u8,
                         DATA: frame_data,
                     },
@@ -174,11 +175,11 @@ impl CanFdFrame {
     }
 
     pub fn is_standard_frame(&self) -> bool {
-        self.frame.MSGTYPE & peak_can::PEAK_MESSAGE_STANDARD as u8 != 0
+        self.frame.MSGTYPE & peak_can::PCAN_MESSAGE_STANDARD as u8 != 0
     }
 
     pub fn is_extended_frame(&self) -> bool {
-        if self.frame.MSGTYPE & peak_can::PEAK_MESSAGE_EXTENDED as u8 != 0 {
+        if self.frame.MSGTYPE & peak_can::PCAN_MESSAGE_EXTENDED as u8 != 0 {
             true
         } else {
             false
@@ -237,12 +238,12 @@ impl PartialEq for CanFdFrame {
 
 #[derive(Debug, Copy, Clone)]
 pub struct Timestamp {
-    timestamp: peak_can::CANTPTimestamp,
+    timestamp: peak_can::TPCANTimestamp,
 }
 
 impl Deref for Timestamp {
-    type Target = peak_can::CANTPTimestamp;
-    
+    type Target = peak_can::TPCANTimestamp;
+
     fn deref(&self) -> &Self::Target {
         &self.timestamp
     }
@@ -251,7 +252,7 @@ impl Deref for Timestamp {
 impl Default for Timestamp {
     fn default() -> Timestamp {
         Timestamp {
-            timestamp: peak_can::CANTPTimestamp {
+            timestamp: peak_can::TPCANTimestamp {
                 micros: 0,
                 millis: 0,
                 millis_overflow: 0,
@@ -286,7 +287,7 @@ pub struct CanSocket {
 impl CanSocket {
     pub fn open<T: Bus>(bus: T, baud: Baudrate) -> Result<CanSocket, CanError> {
         let handle = bus.channel();
-        let code = unsafe { peak_can::CAN_Initialize(handle, baud.into(), 0, 0, 0) };
+        let code = unsafe { pcan_basic()?.CAN_Initialize(handle, baud.into(), 0, 0, 0) };
 
         match CanOkError::try_from(code) {
             Ok(CanOkError::Ok) => Ok(CanSocket { handle }),
@@ -349,20 +350,20 @@ pub enum Baudrate {
 impl From<Baudrate> for u16 {
     fn from(value: Baudrate) -> Self {
         let ret = match value {
-            Baudrate::Baud1M => peak_can::PEAK_BAUD_1M,
-            Baudrate::Baud800K => peak_can::PEAK_BAUD_800K,
-            Baudrate::Baud500K => peak_can::PEAK_BAUD_500K,
-            Baudrate::Baud250K => peak_can::PEAK_BAUD_250K,
-            Baudrate::Baud125K => peak_can::PEAK_BAUD_125K,
-            Baudrate::Baud100K => peak_can::PEAK_BAUD_100K,
-            Baudrate::Baud95K => peak_can::PEAK_BAUD_95K,
-            Baudrate::Baud83K => peak_can::PEAK_BAUD_83K,
-            Baudrate::Baud50K => peak_can::PEAK_BAUD_50K,
-            Baudrate::Baud47K => peak_can::PEAK_BAUD_47K,
-            Baudrate::Baud33K => peak_can::PEAK_BAUD_33K,
-            Baudrate::Baud20K => peak_can::PEAK_BAUD_20K,
-            Baudrate::Baud10K => peak_can::PEAK_BAUD_10K,
-            Baudrate::Baud5K => peak_can::PEAK_BAUD_5K,
+            Baudrate::Baud1M => peak_can::PCAN_BAUD_1M,
+            Baudrate::Baud800K => peak_can::PCAN_BAUD_800K,
+            Baudrate::Baud500K => peak_can::PCAN_BAUD_500K,
+            Baudrate::Baud250K => peak_can::PCAN_BAUD_250K,
+            Baudrate::Baud125K => peak_can::PCAN_BAUD_125K,
+            Baudrate::Baud100K => peak_can::PCAN_BAUD_100K,
+            Baudrate::Baud95K => peak_can::PCAN_BAUD_95K,
+            Baudrate::Baud83K => peak_can::PCAN_BAUD_83K,
+            Baudrate::Baud50K => peak_can::PCAN_BAUD_50K,
+            Baudrate::Baud47K => peak_can::PCAN_BAUD_47K,
+            Baudrate::Baud33K => peak_can::PCAN_BAUD_33K,
+            Baudrate::Baud20K => peak_can::PCAN_BAUD_20K,
+            Baudrate::Baud10K => peak_can::PCAN_BAUD_10K,
+            Baudrate::Baud5K => peak_can::PCAN_BAUD_5K,
         } as u16;
         ret
     }
@@ -376,10 +377,10 @@ impl<T: HasRecvCan + Socket> RecvCan for T {
         let mut timestamp = Timestamp::default();
 
         let error_code = unsafe {
-            peak_can::CAN_Read(
+            pcan_basic()?.CAN_Read(
                 self.handle(),
-                &mut frame.frame as *mut peak_can::CANTPMsg,
-                &mut timestamp.timestamp as *mut peak_can::CANTPTimestamp,
+                &mut frame.frame as *mut peak_can::TPCANMsg,
+                &mut timestamp.timestamp as *mut peak_can::TPCANTimestamp,
             )
         };
 
@@ -394,10 +395,10 @@ impl<T: HasRecvCan + Socket> RecvCan for T {
         let mut frame = CanFrame::default();
 
         let error_code = unsafe {
-            peak_can::CAN_Read(
+            pcan_basic()?.CAN_Read(
                 self.handle(),
-                &mut frame.frame as *mut peak_can::CANTPMsg,
-                0 as *mut peak_can::CANTPTimestamp,
+                &mut frame.frame as *mut peak_can::TPCANMsg,
+                0 as *mut peak_can::TPCANTimestamp,
             )
         };
 
@@ -417,9 +418,9 @@ impl<T: HasRecvCanFd + Socket> RecvCanFd for T {
         let mut timestamp = 0u64;
 
         let error_code = unsafe {
-            peak_can::CAN_ReadFD(
+            pcan_basic()?.CAN_ReadFD(
                 self.handle(),
-                &mut frame.frame as *mut peak_can::CANTPMsgFD,
+                &mut frame.frame as *mut peak_can::TPCANMsgFD,
                 &mut timestamp as *mut u64,
             )
         };
@@ -435,9 +436,9 @@ impl<T: HasRecvCanFd + Socket> RecvCanFd for T {
         let mut frame = CanFdFrame::default();
 
         let error_code = unsafe {
-            peak_can::CAN_ReadFD(
+            pcan_basic()?.CAN_ReadFD(
                 self.handle(),
-                &mut frame.frame as *mut peak_can::CANTPMsgFD,
+                &mut frame.frame as *mut peak_can::TPCANMsgFD,
                 0 as *mut u64,
             )
         };
@@ -456,7 +457,7 @@ impl<T: HasSendCan + Socket> SendCan for T {
     fn send(&self, frame: CanFrame) -> Result<(), CanError> {
         let mut frame = frame;
         let error_code = unsafe {
-            peak_can::CAN_Write(self.handle(), &mut frame.frame as *mut peak_can::CANTPMsg)
+            pcan_basic()?.CAN_Write(self.handle(), &mut frame.frame as *mut peak_can::TPCANMsg)
         };
 
         match CanOkError::try_from(error_code) {
@@ -473,7 +474,7 @@ impl<T: HasSendCanFd + Socket> SendCanFd for T {
     fn send_fd(&self, frame: CanFdFrame) -> Result<(), CanError> {
         let mut frame = frame;
         let error_code = unsafe {
-            peak_can::CAN_WriteFD(self.handle(), &mut frame.frame as *mut peak_can::CANTPMsgFD)
+            pcan_basic()?.CAN_WriteFD(self.handle(), &mut frame.frame as *mut peak_can::TPCANMsgFD)
         };
 
         match CanOkError::try_from(error_code) {

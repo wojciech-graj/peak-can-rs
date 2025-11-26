@@ -15,7 +15,7 @@ pub enum DngBus {
 impl From<DngBus> for u16 {
     fn from(value: DngBus) -> Self {
         let ret = match value {
-            DngBus::DNG1 => peak_can::PEAK_DNGBUS1,
+            DngBus::DNG1 => peak_can::PCAN_DNGBUS1,
         } as u16;
         ret
     }
@@ -26,7 +26,7 @@ impl TryFrom<u16> for DngBus {
 
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value as u32 {
-            peak_can::PEAK_DNGBUS1 => Ok(DngBus::DNG1),
+            peak_can::PCAN_DNGBUS1 => Ok(DngBus::DNG1),
             _ => Err(()),
         }
     }

@@ -3,15 +3,16 @@
 
 use crate::channel::Channel;
 use crate::error::{CanError, CanOkError};
+use crate::pcan_basic;
 use crate::peak_can;
 use std::ffi::c_void;
 
 pub fn api_version() -> Result<String, CanError> {
     let mut data = [0u8; peak_can::MAX_LENGTH_VERSION_STRING as usize];
     let code = unsafe {
-        peak_can::CAN_GetValue(
-            peak_can::PEAK_NONEBUS as u16,
-            peak_can::PEAK_API_VERSION as u8,
+        pcan_basic()?.CAN_GetValue(
+            peak_can::PCAN_NONEBUS as u16,
+            peak_can::PCAN_API_VERSION as u8,
             data.as_mut_ptr() as *mut c_void,
             data.len() as u32,
         )
@@ -49,9 +50,9 @@ impl<T: HasChannelVersion + Channel> ChannelVersion for T {
     fn channel_version(&self) -> Result<Version, CanError> {
         let mut data = [0u8; peak_can::MAX_LENGTH_VERSION_STRING as usize];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_CHANNEL_VERSION as u8,
+                peak_can::PCAN_CHANNEL_VERSION as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -99,9 +100,9 @@ impl<T: HasChannelFeatures + Channel> ChannelFeatures for T {
     fn is_fd_capable(&self) -> Result<bool, CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_CHANNEL_FEATURES as u8,
+                peak_can::PCAN_CHANNEL_FEATURES as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -124,9 +125,9 @@ impl<T: HasChannelFeatures + Channel> ChannelFeatures for T {
     fn is_delay_capable(&self) -> Result<bool, CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_CHANNEL_FEATURES as u8,
+                peak_can::PCAN_CHANNEL_FEATURES as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -149,9 +150,9 @@ impl<T: HasChannelFeatures + Channel> ChannelFeatures for T {
     fn is_io_capable(&self) -> Result<bool, CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_CHANNEL_FEATURES as u8,
+                peak_can::PCAN_CHANNEL_FEATURES as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -184,9 +185,9 @@ impl<T: HasBitrateInfo + Channel> BitrateInfo for T {
     fn bitrate_info(&self) -> Result<(u16, u16), CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_BITRATE_INFO as u8,
+                peak_can::PCAN_BITRATE_INFO as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -216,9 +217,9 @@ impl<T: HasBitrateInfoFd + Channel> BitrateInfoFd for T {
     fn bitrate_info_fd(&self) -> Result<String, CanError> {
         let mut data = [0u8; peak_can::MAX_LENGTH_VERSION_STRING as usize];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_BITRATE_INFO_FD as u8,
+                peak_can::PCAN_BITRATE_INFO_FD as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -250,9 +251,9 @@ impl<T: HasNominalBusSpeed + Channel> NominalBusSpeed for T {
     fn nominal_bus_speed(&self) -> Result<u32, CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_BUSSPEED_NOMINAL as u8,
+                peak_can::PCAN_BUSSPEED_NOMINAL as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -278,9 +279,9 @@ impl<T: HasDataBusSpeed + Channel> DataBusSpeed for T {
     fn data_bus_speed(&self) -> Result<u32, CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_BUSSPEED_DATA as u8,
+                peak_can::PCAN_BUSSPEED_DATA as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -299,9 +300,9 @@ impl<T: HasDataBusSpeed + Channel> DataBusSpeed for T {
 pub fn lan_service_is_running() -> Result<bool, CanError> {
     let mut data = [0u8; 4];
     let code = unsafe {
-        peak_can::CAN_GetValue(
-            peak_can::PEAK_NONEBUS as u16,
-            peak_can::PEAK_LAN_SERVICE_STATUS as u8,
+        pcan_basic()?.CAN_GetValue(
+            peak_can::PCAN_NONEBUS as u16,
+            peak_can::PCAN_LAN_SERVICE_STATUS as u8,
             data.as_mut_ptr() as *mut c_void,
             data.len() as u32,
         )
@@ -324,9 +325,9 @@ pub fn lan_service_is_running() -> Result<bool, CanError> {
 pub fn lan_service_is_stopped() -> Result<bool, CanError> {
     let mut data = [0u8; 4];
     let code = unsafe {
-        peak_can::CAN_GetValue(
-            peak_can::PEAK_NONEBUS as u16,
-            peak_can::PEAK_LAN_SERVICE_STATUS as u8,
+        pcan_basic()?.CAN_GetValue(
+            peak_can::PCAN_NONEBUS as u16,
+            peak_can::PCAN_LAN_SERVICE_STATUS as u8,
             data.as_mut_ptr() as *mut c_void,
             data.len() as u32,
         )
@@ -358,9 +359,9 @@ impl<T: HasFirmwareVersion + Channel> FirmwareVersion for T {
     fn firmware_version(&self) -> Result<String, CanError> {
         let mut data = [0u8; 18usize];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_FIRMWARE_VERSION as u8,
+                peak_can::PCAN_FIRMWARE_VERSION as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )

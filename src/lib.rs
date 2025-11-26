@@ -15,3 +15,14 @@ pub mod special;
 pub mod trace;
 
 use peak_can_sys as peak_can;
+
+use std::sync::LazyLock;
+
+static PCAN_BASIC: LazyLock<Result<peak_can::Pcan, crate::error::CanError>> = LazyLock::new(|| {
+    let filename = libloading::library_filename("PCANBasic");
+    Ok(unsafe { peak_can::Pcan::new(filename) }?)
+});
+
+pub(crate) fn pcan_basic() -> Result<&'static peak_can::Pcan, crate::error::CanError> {
+    PCAN_BASIC.as_ref().map_err(|e| e.clone())
+}

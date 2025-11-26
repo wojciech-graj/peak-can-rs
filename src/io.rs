@@ -7,6 +7,7 @@
 
 use crate::channel::Channel;
 use crate::error::{CanError, CanOkError};
+use crate::pcan_basic;
 use crate::peak_can;
 use std::ffi::c_void;
 
@@ -48,9 +49,9 @@ impl<T: HasDigitalConfiguration + Channel> DigitalConfiguration for T {
     fn digital_mode(&self, pin: u8) -> Result<IOConfig, CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_CONFIGURATION as u8,
+                peak_can::PCAN_IO_DIGITAL_CONFIGURATION as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -75,9 +76,9 @@ impl<T: HasDigitalConfiguration + Channel> DigitalConfiguration for T {
     fn digital_mode_word(&self) -> Result<u32, CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_CONFIGURATION as u8,
+                peak_can::PCAN_IO_DIGITAL_CONFIGURATION as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -102,9 +103,9 @@ impl<T: HasSetDigitalConfiguration + Channel> SetDigitalConfiguration for T {
     fn set_digital_mode(&self, pin: u8, mode: IOConfig) -> Result<(), CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_CONFIGURATION as u8,
+                peak_can::PCAN_IO_DIGITAL_CONFIGURATION as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -123,9 +124,9 @@ impl<T: HasSetDigitalConfiguration + Channel> SetDigitalConfiguration for T {
         let mut data = mode_word.to_le_bytes();
 
         let code = unsafe {
-            peak_can::CAN_SetValue(
+            pcan_basic()?.CAN_SetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_CONFIGURATION as u8,
+                peak_can::PCAN_IO_DIGITAL_CONFIGURATION as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -141,9 +142,9 @@ impl<T: HasSetDigitalConfiguration + Channel> SetDigitalConfiguration for T {
     fn set_digital_mode_word(&self, mode_word: u32) -> Result<(), CanError> {
         let mut data = mode_word.to_le_bytes();
         let code = unsafe {
-            peak_can::CAN_SetValue(
+            pcan_basic()?.CAN_SetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_CONFIGURATION as u8,
+                peak_can::PCAN_IO_DIGITAL_CONFIGURATION as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -186,6 +187,7 @@ impl From<IOValue> for u32 {
     }
 }
 
+#[allow(unused)]
 pub(crate) trait HasDigitalValue {}
 
 pub trait DigitalValue {
@@ -197,9 +199,9 @@ impl<T: HasSetDigitalValue + Channel> DigitalValue for T {
     fn digital_value(&self, pin: u8) -> Result<IOValue, CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_VALUE as u8,
+                peak_can::PCAN_IO_DIGITAL_VALUE as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -224,9 +226,9 @@ impl<T: HasSetDigitalValue + Channel> DigitalValue for T {
     fn digital_value_word(&self) -> Result<u32, CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_VALUE as u8,
+                peak_can::PCAN_IO_DIGITAL_VALUE as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -251,9 +253,9 @@ impl<T: HasSetDigitalValue + Channel> SetDigitalValue for T {
     fn set_digital_value(&self, pin: u8, value: IOValue) -> Result<(), CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_CONFIGURATION as u8,
+                peak_can::PCAN_IO_DIGITAL_CONFIGURATION as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -272,9 +274,9 @@ impl<T: HasSetDigitalValue + Channel> SetDigitalValue for T {
         let mut data = mode_word.to_le_bytes();
 
         let code = unsafe {
-            peak_can::CAN_SetValue(
+            pcan_basic()?.CAN_SetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_VALUE as u8,
+                peak_can::PCAN_IO_DIGITAL_VALUE as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -290,9 +292,9 @@ impl<T: HasSetDigitalValue + Channel> SetDigitalValue for T {
     fn set_digital_value_word(&self, value_word: u32) -> Result<(), CanError> {
         let mut data = value_word.to_le_bytes();
         let code = unsafe {
-            peak_can::CAN_SetValue(
+            pcan_basic()?.CAN_SetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_VALUE as u8,
+                peak_can::PCAN_IO_DIGITAL_VALUE as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -318,9 +320,9 @@ impl<T: HasSetDigitalSet + Channel> SetDigitalSet for T {
     fn digital_set(&self, mask: u32) -> Result<(), CanError> {
         let mut data = mask.to_le_bytes();
         let code = unsafe {
-            peak_can::CAN_SetValue(
+            pcan_basic()?.CAN_SetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_SET as u8,
+                peak_can::PCAN_IO_DIGITAL_SET as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -346,9 +348,9 @@ impl<T: HasSetDigitalClear + Channel> SetDigitalClear for T {
     fn digital_clear(&self, mask: u32) -> Result<(), CanError> {
         let mut data = mask.to_le_bytes();
         let code = unsafe {
-            peak_can::CAN_SetValue(
+            pcan_basic()?.CAN_SetValue(
                 self.channel(),
-                peak_can::PEAK_IO_DIGITAL_CLEAR as u8,
+                peak_can::PCAN_IO_DIGITAL_CLEAR as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
@@ -374,9 +376,9 @@ impl<T: HasAnalogValue + Channel> AnalogValue for T {
     fn analog_value(&self) -> Result<u32, CanError> {
         let mut data = [0u8; 4];
         let code = unsafe {
-            peak_can::CAN_GetValue(
+            pcan_basic()?.CAN_GetValue(
                 self.channel(),
-                peak_can::PEAK_IO_ANALOG_VALUE as u8,
+                peak_can::PCAN_IO_ANALOG_VALUE as u8,
                 data.as_mut_ptr() as *mut c_void,
                 data.len() as u32,
             )
