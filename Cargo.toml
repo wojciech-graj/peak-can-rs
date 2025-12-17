@@ -10,4 +10,4 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 libloading = "0.8"
-peak-can-sys = "0.2.0"
+peak-can-sys = { git = "https://github.com/TuEmb/peak-can-sys.git", rev = "583bb4d" }
